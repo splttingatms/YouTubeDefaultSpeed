@@ -5,7 +5,7 @@
 // @include     https://www.youtube.com/*
 // @version     1
 // @grant       none
-// @require     https://gist.githubusercontent.com/arantius/3123124/raw/grant-none-shim.js
+// @require     https://greasyfork.org/scripts/10208-gm-api-script/code/GM%20API%20script.js?version=54964
 // @run-at      document-end
 // ==/UserScript==
 
