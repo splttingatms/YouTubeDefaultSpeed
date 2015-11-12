@@ -1,7 +1,7 @@
 YouTubeDefaultSpeed
 ===================
 
-YouTubeDefaultSpeed is a greasemonkey script that remembers your preferred video playback speed.
+YouTubeDefaultSpeed is a user script that remembers your preferred video playback speed. Also hosted at [Greasy Fork](https://greasyfork.org/en/scripts/13807-youtubedefaultspeed), a user script repository.
 
 ### Installation
 [Install YouTubeDefaultSpeed script](https://github.com/splttingatms/YouTubeDefaultSpeed/raw/master/YouTubeDefaultSpeed.user.js)
