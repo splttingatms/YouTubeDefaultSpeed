@@ -3,6 +3,7 @@
 // @namespace   youtubedefaultspeed
 // @description Set a default playback rate for YouTube videos.
 // @include     https://www.youtube.com/*
+// @include     http://www.youtube.com/*
 // @version     1
 // @grant       none
 // @require     https://greasyfork.org/scripts/10208-gm-api-script/code/GM%20API%20script.js?version=54964
