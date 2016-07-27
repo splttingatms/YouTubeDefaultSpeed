@@ -14,7 +14,7 @@
 // which blocks access to the movie_player YouTube object
 
 (function() {
-  var RATE_OPTIONS = ["0.25", "0.5", "1", "1.25", "1.5", "2"];
+  var RATE_OPTIONS = ["0.25", "0.5", "1", "1.25", "1.5", "2", "2.2", "2.5", "2.7", "3"];
   
   function getMoviePlayer(callback) {
     if (typeof movie_player === "undefined" ||
@@ -25,12 +25,23 @@
       callback(movie_player);
     }
   }
+
+  function forcePlaybackRate(r) {
+    var es = document.getElementsByClassName("video-stream");
+    var v = es[0];
+    if (v === undefined || v.playbackRate === undefined) {
+      setTimeout(function(){setPlaybackRate(r);}, 1000);
+      return;
+    }
+    v.playbackRate = r;
+  }
   
   function setPlaybackRate() {
     var rate = GM_getValue("playbackRate", 1); // default to 1 if not set
     getMoviePlayer(function (player) { 
       console.log("playback rate: " + rate);
       player.setPlaybackRate(rate); 
+      forcePlaybackRate(rate);
     });
   }
 
