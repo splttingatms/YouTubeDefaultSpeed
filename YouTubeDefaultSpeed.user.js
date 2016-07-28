@@ -26,23 +26,25 @@
     }
   }
 
-  function forcePlaybackRate(r) {
-    var es = document.getElementsByClassName("video-stream");
-    var v = es[0];
-    if (v === undefined || v.playbackRate === undefined) {
-      setTimeout(function(){setPlaybackRate(r);}, 1000);
-      return;
-    }
-    v.playbackRate = r;
-  }
-  
-  function setPlaybackRate() {
-    var rate = GM_getValue("playbackRate", 1); // default to 1 if not set
-    getMoviePlayer(function (player) { 
-      console.log("playback rate: " + rate);
-      player.setPlaybackRate(rate); 
-      forcePlaybackRate(rate);
+  function setPlaybackRate(r) {
+    getMoviePlayer(function (player) {
+      console.log("playback rate: " + r);
+      player.setPlaybackRate(r);
     });
+
+    (function force(r) {
+      var es = document.getElementsByClassName("video-stream");
+      if (es.length < 1 || es[0] === undefined || es[0].playbackRate === undefined) {
+        setTimeout(function(){force(r);}, 1000);
+        return;
+      }
+      es[0].playbackRate = r;
+    })(r);
+  }
+
+  function setPlaybackRateToPreference() {
+      var r = GM_getValue("playbackRate", 1);
+      setPlaybackRate(r);
   }
 
   function onElementSourceUpdate(target, callback) {
@@ -70,7 +72,7 @@
     GM_setValue("playbackRate", rate);
     
     // set playback rate
-    setPlaybackRate();
+    setPlaybackRate(rate);
   }
   
   function injectButtons() {
@@ -103,14 +105,14 @@
     injectButtons();
     
     // immediately try to change playback rate
-    setPlaybackRate();
+    setPlaybackRateToPreference();
     
     // apply playback rate again if video changes
     getVideoElement(function (video) {
       if (video.hasAttribute("src")) console.log("video source changed: " + video.src);
       onElementSourceUpdate(video, function () { 
         console.log("video source changed: " + video.src);
-        setPlaybackRate(); 
+        setPlaybackRateToPreference();
       });
     });
   }
