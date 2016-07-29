@@ -14,7 +14,7 @@
 // which blocks access to the movie_player YouTube object
 
 (function() {
-  var RATE_OPTIONS = ["0.25", "0.5", "1", "1.25", "1.5", "2"];
+  var RATE_OPTIONS = ["0.25", "0.5", "1", "1.25", "1.5", "2", "2.2", "2.5", "2.7", "3"];
   
   function getMoviePlayer(callback) {
     if (typeof movie_player === "undefined" ||
@@ -25,13 +25,26 @@
       callback(movie_player);
     }
   }
-  
-  function setPlaybackRate() {
-    var rate = GM_getValue("playbackRate", 1); // default to 1 if not set
-    getMoviePlayer(function (player) { 
-      console.log("playback rate: " + rate);
-      player.setPlaybackRate(rate); 
+
+  function setPlaybackRate(r) {
+    getMoviePlayer(function (player) {
+      console.log("playback rate: " + r);
+      player.setPlaybackRate(r);
     });
+
+    (function force(r) {
+      var es = document.getElementsByClassName("video-stream");
+      if (es.length < 1 || es[0] === undefined || es[0].playbackRate === undefined) {
+        setTimeout(function(){force(r);}, 1000);
+        return;
+      }
+      es[0].playbackRate = r;
+    })(r);
+  }
+
+  function setPlaybackRateToPreference() {
+      var r = GM_getValue("playbackRate", 1);
+      setPlaybackRate(r);
   }
 
   function onElementSourceUpdate(target, callback) {
@@ -59,7 +72,7 @@
     GM_setValue("playbackRate", rate);
     
     // set playback rate
-    setPlaybackRate();
+    setPlaybackRate(rate);
   }
   
   function injectButtons() {
@@ -92,14 +105,14 @@
     injectButtons();
     
     // immediately try to change playback rate
-    setPlaybackRate();
+    setPlaybackRateToPreference();
     
     // apply playback rate again if video changes
     getVideoElement(function (video) {
       if (video.hasAttribute("src")) console.log("video source changed: " + video.src);
       onElementSourceUpdate(video, function () { 
         console.log("video source changed: " + video.src);
-        setPlaybackRate(); 
+        setPlaybackRateToPreference();
       });
     });
   }
