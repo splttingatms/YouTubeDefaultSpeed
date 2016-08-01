@@ -1,50 +1,49 @@
 // ==UserScript==
 // @name        YoutubeDefaultSpeed
 // @namespace   youtubedefaultspeed
+// @version     1.1.1
+// @author		splttingatms
+// @homepage	https://github.com/splttingatms/YouTubeDefaultSpeed
 // @description Set a default playback rate for YouTube videos.
-// @include     https://www.youtube.com/*
-// @include     http://www.youtube.com/*
-// @version     1
-// @grant       none
-// @require     https://greasyfork.org/scripts/10208-gm-api-script/code/GM%20API%20script.js?version=54964
-// @run-at      document-end
+// @match       http*://*.youtube.com/*
+// @grant       GM_getValue
+// @grant       GM_setValue
+// @run-at      document-idle
+// @noframes
 // ==/UserScript==
 
-// Needs to emulate Greasemonkey APIs since specifying a "grant" other than none will enable the sandbox,
-// which blocks access to the movie_player YouTube object
-
 (function() {
+  'use strict';
+
   var RATE_OPTIONS = ["0.25", "0.5", "1", "1.25", "1.5", "2", "2.2", "2.5", "2.7", "3"];
-  
-  function getMoviePlayer(callback) {
-    if (typeof movie_player === "undefined" ||
-        typeof movie_player.setPlaybackRate !== "function") {
-      window.setTimeout(function() { getMoviePlayer(callback); }, 5000);
-    }
-    else {
-      callback(movie_player);
+  var RETRY_DELAY_IN_MS = 100;
+
+  function getElement(query, callback) {
+  	var element = document.querySelector(query);
+    if (element === null) {
+      // null possible if element not loaded yet, retry with delay
+      window.setTimeout(function() { getElement(query, callback); }, RETRY_DELAY_IN_MS);
+    } else {
+      callback(element);
     }
   }
 
-  function setPlaybackRate(r) {
-    getMoviePlayer(function (player) {
-      console.log("playback rate: " + r);
-      player.setPlaybackRate(r);
+  function setPlaybackRate(rate) {
+    // video element can force unofficial playback rates
+    getElement("video", function (video) {
+    	video.playbackRate = rate;
     });
 
-    (function force(r) {
-      var es = document.getElementsByClassName("video-stream");
-      if (es.length < 1 || es[0] === undefined || es[0].playbackRate === undefined) {
-        setTimeout(function(){force(r);}, 1000);
-        return;
-      }
-      es[0].playbackRate = r;
-    })(r);
+    // movie_player div controls the displayed "Speed" in player menu
+    // note: does not show values beyond official list
+    getElement("#movie_player", function (player) {
+      player.setPlaybackRate(rate);
+    });
   }
 
   function setPlaybackRateToPreference() {
-      var r = GM_getValue("playbackRate", 1);
-      setPlaybackRate(r);
+      var preferredRate = GM_getValue("playbackRate", 1); // default to 1 if not set yet
+      setPlaybackRate(preferredRate);
   }
 
   function onElementSourceUpdate(target, callback) {
@@ -57,21 +56,8 @@
     observer.observe(target, {attributes: true, attributeFilter: ["src"]});
   }
   
-  function getVideoElement(callback) {
-    var videoElements = document.getElementsByTagName("video");
-    if (videoElements.Length <= 0 || typeof videoElements[0] === "undefined") {
-      window.setTimeout(function() { getVideoElement(callback); }, 500);
-    }
-    else {
-      callback(videoElements[0]);
-    }
-  }
-  
   function handleRateButtonClick(rate) {
-    // save as new default
     GM_setValue("playbackRate", rate);
-    
-    // set playback rate
     setPlaybackRate(rate);
   }
   
@@ -99,29 +85,15 @@
   }
   
   function main() {
-    if (window.self != window.top) return;
-    
-    // add buttons
     injectButtons();
-    
-    // immediately try to change playback rate
     setPlaybackRateToPreference();
     
-    // apply playback rate again if video changes
-    getVideoElement(function (video) {
-      if (video.hasAttribute("src")) console.log("video source changed: " + video.src);
+    // YouTube uses AJAX so monitor element for video changes
+    getElement("video", function (video) {
       onElementSourceUpdate(video, function () { 
-        console.log("video source changed: " + video.src);
         setPlaybackRateToPreference();
       });
     });
   }
-
-  try {
-    main();
-  }
-  catch (e) {
-    console.log(e);
-  }
-
+  main();
 })();
